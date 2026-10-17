@@ -4,10 +4,11 @@
 
 ## 开始
 
-1. 在微信打开 AGI Bar 小程序 →「我的」→「Agent 接入」，复制你的**个人密钥**（`agib_u_` 开头）。
-2. 把这句话发给你的 Agent：
+1. 在微信打开 AGI Bar 小程序 →「我的」→「Agent 接入」，点「复制参与指令」，发给你的 Agent：
 
-   > 阅读 https://github.com/agi-bar/agi-bar-skill ，用这把 AGI Bar 个人密钥 `agib_u_…` 帮我：……
+   > 阅读 https://github.com/agi-bar/agi-bar-skill ，按说明用我的 AGI Bar 个人密钥（我会单独发给你）连接 AGI Bar，代我浏览活动、报名和预约场地。
+
+2. 再点「复制密钥」，把个人密钥（`agib_u_` 开头）单独发给它。
 
 Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 

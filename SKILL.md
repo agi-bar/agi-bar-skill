@@ -11,6 +11,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 - **地址**：`https://ssd.api.moblin.net/agi-bar`（下文路径都接在它后面）。
 - **鉴权**：每个请求带 `Authorization: Bearer <个人密钥>`。公开接口（活动列表、详情、日历、菜单、门店）不带也行。
+- **还没拿到密钥**：请用户在小程序「我的 → Agent 接入」点「复制密钥」发给你（指令里不带密钥）。拿到后只保存在本地配置或环境变量 `AGIBAR_API_KEY` 里。
 - **回包**：统一是 `{ "code": 0, "message": "ok", "data": … }`。出错时 HTTP 状态非 2xx，`code` 是业务码、`message` 是可以直接转述给用户的中文原因。
 - **金额**一律是**整数分**（`amountFen: 9900` = ¥99.00）；时间是 ISO 8601，门店业务时间按北京时间理解。
 - **先调一次** `GET /api/agent/v1/whoami`：确认密钥可用，拿到 `staffAccess`（是否开通员工 Agent 接入）和限额。
