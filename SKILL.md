@@ -5,7 +5,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 # AGI Bar Agent 说明书
 
-你正在代表一位 AGI Bar 用户操作。用户在小程序「我的 → Agent 接入」拿到了一把**个人密钥**（`agib_u_` 开头，50 个字符），它代表**这个人本人**：小程序里这个人能做的，你在下面列出的接口里也能做；不能做的，你也做不了。
+你正在代表一位 AGI Bar 用户操作。用户在小程序「我的 → Agent 接入」复制了自己的**个人密钥**（`agib_u_` 开头，50 个字符），它代表**这个人本人**：小程序里这个人能做的，你在下面列出的接口里也能做；不能做的，你也做不了。
 
 ## 0. 先读这里
 
@@ -29,8 +29,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 | 情况 | 返回 | 你该怎么做 |
 |---|---|---|
 | 密钥写错 / 已重置 | 401「个人密钥无效或已重置」 | 请用户在小程序「Agent 接入」复制最新密钥 |
-| 密钥已关闭 | 401「个人密钥已关闭…」 | 请用户在小程序重新生成 |
-| 90 天没用而休眠 | 401「…休眠…一键恢复」 | 请用户在小程序点「恢复」 |
+| 90 天没用而休眠 | 401「…休眠…」 | 请用户在小程序「Agent 接入」重新复制一次密钥（复制即恢复） |
 | 太频繁 | 429（每分钟 60 次、每天 3000 次） | 等一会儿再试；列表请翻页而不是反复全量拉取 |
 | 接口没开放 | 403 | 请用户在小程序里操作 |
 | 报名资料不全 | 400，业务码 `4061`，列出缺项 | 请用户在小程序「我的」补全头像、称呼、公司、职务、微信号和手机号 |
@@ -79,8 +78,8 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 收费报名、场地预约、活动场地费、扩容补差、活动增项，服务端都会生成一张待付款订单（`orderNo`）。
 
-1. `GET /api/agent/v1/payments/:orderNo` → `state`（`pending | paid | expired | closed | refunded`）、`amountFen`、`expiresAt`、**`payUrl`**（https 链接，在微信里打开直达小程序付款页）、`qrUrl`（同一链接的二维码 PNG：`GET /api/agent/v1/payments/:orderNo/qr`，需带密钥下载）、`next`（下一步该做什么）。
-2. 把 `payUrl` 发给用户（在电脑上就下载 `qrUrl` 的二维码给他扫）。说清金额和付款截止时间。
+1. `GET /api/agent/v1/payments/:orderNo` → `state`（`pending | paid | expired | closed | refunded`）、`amountFen`、`expiresAt`、**`payUrl`**（https 链接，在手机上打开直达小程序付款页）、`qrUrl`（同一链接的二维码：`GET /api/agent/v1/payments/:orderNo/qr` 是 PNG；加 `?format=text` 是可以直接打印在终端里的字符二维码）、`next`（下一步该做什么）。
+2. 告诉用户金额和付款截止时间，并给出付款方式：用户在手机上就发 `payUrl`；在电脑终端里就把 `?format=text` 的二维码原样打印出来让他用微信扫（扫不出来再给 PNG）。用 CLI 时 `node scripts/agibar.mjs pay <orderNo>` 一次打出全部。
 3. 调 `GET /api/agent/v1/payments/:orderNo/wait?timeout=25` 长轮询：付款完成或到时就返回（`timedOut=true` 表示还没付，可以再等）。也可以隔一会儿查一次状态。
 4. 看到 `state=paid` 就告诉用户已经办好。本人付完后小程序会提示「已付款，可以回到你的 Agent 了」。
 
@@ -144,6 +143,7 @@ export AGIBAR_API_KEY=agib_u_xxx
 node scripts/agibar.mjs GET /api/agent/v1/whoami
 node scripts/agibar.mjs GET "/api/activities?storeId=BJ&size=10"
 node scripts/agibar.mjs POST /api/activities/<id>/register '{"registrationAnswers":[],"expectedRegistrationId":null}'
+node scripts/agibar.mjs pay <orderNo>    # 金额、链接和终端二维码
 node scripts/agibar.mjs wait <orderNo>
 node scripts/agibar.mjs mcp          # 作为 MCP stdio server 运行
 ```

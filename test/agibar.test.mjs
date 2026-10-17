@@ -31,7 +31,7 @@ test('MCP handshake lists the tools and refuses calls without a key', async () =
   ]);
   assert.equal(init.result.serverInfo.name, 'agi-bar');
   assert.match(init.result.instructions, /从不付钱/);
-  assert.deepEqual(list.result.tools.map((tool) => tool.name), ['agibar_request', 'agibar_payment', 'agibar_wait_payment', 'agibar_guide']);
+  assert.deepEqual(list.result.tools.map((tool) => tool.name), ['agibar_request', 'agibar_payment', 'agibar_pay_prompt', 'agibar_wait_payment', 'agibar_guide']);
   assert.equal(call.result.isError, true);
   assert.match(call.result.content[0].text, /AGIBAR_API_KEY/);
 });

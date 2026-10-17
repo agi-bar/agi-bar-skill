@@ -4,7 +4,7 @@
 
 ## 开始
 
-1. 在微信打开 AGI Bar 小程序 →「我的」→「Agent 接入」→ 生成并复制你的**个人密钥**（`agib_u_` 开头）。
+1. 在微信打开 AGI Bar 小程序 →「我的」→「Agent 接入」，复制你的**个人密钥**（`agib_u_` 开头）。
 2. 把这句话发给你的 Agent：
 
    > 阅读 https://github.com/agi-bar/agi-bar-skill ，用这把 AGI Bar 个人密钥 `agib_u_…` 帮我：……
@@ -13,7 +13,7 @@ Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 
 ## 安全边界
 
-- 密钥代表**你本人**：你在小程序里能做的，Agent 才能做；改角色、重置或关闭密钥立即生效。
+- 密钥代表**你本人**：你在小程序里能做的，Agent 才能做；改角色或重置密钥立即生效。
 - Agent **不能付钱**：需要付款时它会给你一个链接 / 二维码，你在微信里打开小程序自己付。
 - 任何接口都**不返回手机号和微信号**；每把密钥每分钟 60 次、每天 3000 次；90 天不用自动休眠。
 - 不要把密钥公开或发给别人。泄露了就在小程序里点「重置」。
@@ -26,6 +26,7 @@ Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 export AGIBAR_API_KEY=agib_u_xxx
 node scripts/agibar.mjs GET /api/agent/v1/whoami
 node scripts/agibar.mjs GET "/api/activities?storeId=BJ&size=10"
+node scripts/agibar.mjs pay <orderNo>     # 金额、链接和终端二维码
 node scripts/agibar.mjs wait <orderNo>
 node scripts/agibar.mjs qr <orderNo> pay.png
 ```
@@ -44,7 +45,7 @@ node scripts/agibar.mjs qr <orderNo> pay.png
 }
 ```
 
-工具：`agibar_guide`、`agibar_request`、`agibar_payment`、`agibar_wait_payment`。
+工具：`agibar_guide`、`agibar_request`、`agibar_payment`、`agibar_pay_prompt`、`agibar_wait_payment`。
 
 ## 维护
 

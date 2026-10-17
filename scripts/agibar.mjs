@@ -3,6 +3,7 @@
 //
 //   AGIBAR_API_KEY=agib_u_xxx node scripts/agibar.mjs GET /api/agent/v1/whoami
 //   node scripts/agibar.mjs POST /api/activities/<id>/register '{"registrationAnswers":[]}'
+//   node scripts/agibar.mjs pay <orderNo>           # amount, deadline, link and a QR code drawn in the terminal
 //   node scripts/agibar.mjs wait <orderNo>          # long-poll a payment until it settles
 //   node scripts/agibar.mjs qr <orderNo> pay.png    # save the payment QR code
 //   node scripts/agibar.mjs mcp                     # run as an MCP stdio server
@@ -36,7 +37,7 @@ function normalizePath(path) {
   return value.replace(/^\/agi-bar(?=\/)/, '');
 }
 
-export async function request(method, path, body, { binary = false } = {}) {
+export async function request(method, path, body, { binary = false, text: asText = false } = {}) {
   const { key, baseUrl } = config();
   assertKey(key);
   const headers = { authorization: `Bearer ${key}`, 'user-agent': `agi-bar-skill/${VERSION}` };
@@ -47,6 +48,7 @@ export async function request(method, path, body, { binary = false } = {}) {
   }
   const response = await fetch(`${baseUrl}${normalizePath(path)}`, init);
   if (binary && response.ok) return Buffer.from(await response.arrayBuffer());
+  if (asText && response.ok) return response.text();
   const text = await response.text();
   let payload;
   try {
@@ -62,6 +64,21 @@ export async function request(method, path, body, { binary = false } = {}) {
     throw error;
   }
   return payload && typeof payload === 'object' && 'data' in payload ? payload.data : payload;
+}
+
+/** What to show the owner: amount, deadline, the link, and the QR code as terminal text. */
+export async function paymentPrompt(orderNo) {
+  const payment = await request('GET', `/api/agent/v1/payments/${encodeURIComponent(orderNo)}`);
+  if (payment.state !== 'pending' || !payment.payUrl) return { payment, text: payment.next };
+  const qr = await request('GET', `/api/agent/v1/payments/${encodeURIComponent(orderNo)}/qr?format=text`, undefined, { text: true });
+  const yuan = (Number(payment.amountFen) / 100).toFixed(2);
+  const deadline = payment.expiresAt ? new Date(payment.expiresAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }) : '';
+  const text = [
+    `${payment.title} · ¥${yuan}${deadline ? ` · 请在 ${deadline} 前付款` : ''}`,
+    `用微信扫码，或在手机上打开：${payment.payUrl}`,
+    qr,
+  ].join('\n');
+  return { payment, text };
 }
 
 export async function waitForPayment(orderNo, maxMinutes = 15) {
@@ -96,6 +113,11 @@ const TOOLS = [
     inputSchema: { type: 'object', properties: { orderNo: { type: 'string' } }, required: ['orderNo'] },
   },
   {
+    name: 'agibar_pay_prompt',
+    description: '生成给本人的付款提示：金额、截止时间、付款链接和终端可显示的二维码（原样展示给用户）。',
+    inputSchema: { type: 'object', properties: { orderNo: { type: 'string' } }, required: ['orderNo'] },
+  },
+  {
     name: 'agibar_wait_payment',
     description: '等待本人完成付款：长轮询直到订单不再是 pending（默认最多 15 分钟）。',
     inputSchema: {
@@ -120,6 +142,8 @@ async function callTool(name, args = {}) {
       return request(String(args.method || 'GET'), String(args.path || ''), args.body);
     case 'agibar_payment':
       return request('GET', `/api/agent/v1/payments/${encodeURIComponent(String(args.orderNo || ''))}`);
+    case 'agibar_pay_prompt':
+      return (await paymentPrompt(String(args.orderNo || ''))).text;
     case 'agibar_wait_payment':
       return waitForPayment(String(args.orderNo || ''), Math.min(Math.max(Number(args.maxMinutes) || 15, 1), 30));
     case 'agibar_guide':
@@ -156,7 +180,8 @@ function runMcp() {
       } else if (method === 'tools/call') {
         try {
           const result = await callTool(params?.name, params?.arguments || {});
-          send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] } });
+          const text = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+          send({ jsonrpc: '2.0', id, result: { content: [{ type: 'text', text }] } });
         } catch (error) {
           send({ jsonrpc: '2.0', id, result: { isError: true, content: [{ type: 'text', text: String(error.message || error) }] } });
         }
@@ -178,6 +203,7 @@ function usage() {
     `agibar ${VERSION} — AGI Bar 个人密钥 CLI（说明书：${SKILL_URL}）`,
     '',
     '  agibar <GET|POST|PATCH|DELETE> <path> [json-body]',
+    '  agibar pay <orderNo>',
     '  agibar wait <orderNo> [maxMinutes]',
     '  agibar qr <orderNo> [out.png]',
     '  agibar mcp',
@@ -194,6 +220,10 @@ async function main(argv) {
   }
   if (command === 'mcp') {
     runMcp();
+    return;
+  }
+  if (command === 'pay') {
+    console.log((await paymentPrompt(rest[0])).text);
     return;
   }
   if (command === 'wait') {
