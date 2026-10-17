@@ -53,7 +53,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 | 我是谁 | `GET /api/agent/v1/whoami` | `userId`、`staffAccess`、说明书地址、限额 |
 | 我的资料 | `GET /api/my/profile` | 只读；手机号打码。改资料请用户在小程序里改 |
 | 我的报名 | `GET /api/my/events/registrations` | `mode=upcoming\|past`、`status`、`page`、`size≤50`、`cursor` |
-| 我在某场的状态 | `GET /api/activities/:id/me` | 报名状态、待付款票单 `ticketPayOrderNo`、是否可管理 `canManageEvent` |
+| 我在某场的状态 | `GET /api/activities/:id/me` | 报名状态与 `reviewVersion`、票单 `registration.ticketOrder`（`orderNo`、`status`、`expiresAt`）、是否可管理 `canManageEvent` |
 | 我的订单 | `GET /api/my/orders`、`GET /api/orders/:orderNo` | `status` 可筛选 |
 | 我的场地预约 | `GET /api/my/bookings`、`GET /api/my/bookings/:bookingNo` | |
 | AGI Pass | `GET /api/pass/me/summary` | 是否有效、到期日、本年打卡进度 |
@@ -79,7 +79,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 收费报名、场地预约、活动场地费、扩容补差、活动增项，服务端都会生成一张待付款订单（`orderNo`）。
 
-1. `GET /api/agent/v1/payments/:orderNo` → `state`（`pending | paid | expired | closed | refunded`）、`amountFen`、`expiresAt`、**`payUrl`**（https 链接，在微信里打开直达小程序付款页）、`qrUrl`（同一链接的二维码 PNG，需带密钥下载）、`next`（下一步该做什么）。
+1. `GET /api/agent/v1/payments/:orderNo` → `state`（`pending | paid | expired | closed | refunded`）、`amountFen`、`expiresAt`、**`payUrl`**（https 链接，在微信里打开直达小程序付款页）、`qrUrl`（同一链接的二维码 PNG：`GET /api/agent/v1/payments/:orderNo/qr`，需带密钥下载）、`next`（下一步该做什么）。
 2. 把 `payUrl` 发给用户（在电脑上就下载 `qrUrl` 的二维码给他扫）。说清金额和付款截止时间。
 3. 调 `GET /api/agent/v1/payments/:orderNo/wait?timeout=25` 长轮询：付款完成或到时就返回（`timedOut=true` 表示还没付，可以再等）。也可以隔一会儿查一次状态。
 4. 看到 `state=paid` 就告诉用户已经办好。本人付完后小程序会提示「已付款，可以回到你的 Agent 了」。
@@ -123,12 +123,12 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 | 调整名额 | `POST /api/my/events/:id/capacity` | `{ "capacity": 80 }`；扩容可能产生补差订单 → 「4. 付款」 |
 | 报名名单 | `GET /api/my/events/:id/registrations` | `status`、`keyword`、`page`、`size≤50`、`cursor`；加 `includeAnswers=1` 返回每人的报名表答案。字段：姓名、公司、职务、状态、报名时间、是否签到、是否 AGI Pass。**没有手机号和微信号** |
 | 单个报名 | `GET /api/my/events/:id/registrations/:registrationId` | 含报名理由与答案 |
-| 审核 | `POST …/registrations/:registrationId/approve`、`…/ignore`、`…/remove` | body `{ "reviewVersion": <读到的版本> }`；移除已付款报名会退款 |
+| 审核 | `POST /api/my/events/:id/registrations/:registrationId/approve`、`/api/my/events/:id/registrations/:registrationId/ignore`、`/api/my/events/:id/registrations/:registrationId/remove` | body `{ "reviewVersion": <读到的版本> }`；移除已付款报名会退款 |
 | 签到 | `POST /api/my/events/check-in` | `{ "payload": "<扫到的入场码内容>" }` |
 | 现场签到码 | `GET /api/my/events/:id/checkin-code` | PNG 图片，参与者扫码自助签到 |
-| 协作人员 | `GET/POST /api/my/events/:id/volunteers`、`DELETE …/volunteers/:userId` | 增减仅主办方 |
-| 活动发票 | `GET /api/my/events/:id/invoice`、`POST …/invoice`、`POST …/invoice/clear` | 查看开票状态、提交或清空抬头（主办方） |
-| 合同与文件 | `GET /api/my/events/:id/contract`、`POST …/contract`、`GET …/documents` | 主办方 |
+| 协作人员 | `GET/POST /api/my/events/:id/volunteers`、`DELETE /api/my/events/:id/volunteers/:volunteerUserId` | 增减仅主办方 |
+| 活动发票 | `GET/POST /api/my/events/:id/invoice`、`POST /api/my/events/:id/invoice/clear` | 查看开票状态、提交或清空抬头（主办方） |
+| 合同与文件 | `GET/POST /api/my/events/:id/contract`、`GET /api/my/events/:id/documents` | 主办方 |
 | 付增项 | `POST /api/my/events/:id/charges/pay` | 返回订单 → 「4. 付款」 |
 | 活动回顾 | `POST /api/my/events/:id/reviews` | 活动结束后，`{ "type": "audio\|video\|link", "url", "title" }` |
 | 照片上传开关 | `PATCH /api/my/events/:id/photo-upload` | `{ "allowPhotoUpload": false }` |
