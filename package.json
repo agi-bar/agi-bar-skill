@@ -1,0 +1,10 @@
+{
+  "name": "agi-bar-skill",
+  "version": "1.0.0",
+  "description": "AGI Bar agent skill: let your AI agent use the AGI Bar miniapp with your personal key",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "agibar": "scripts/agibar.mjs" },
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}
