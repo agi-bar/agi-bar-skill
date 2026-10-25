@@ -5,7 +5,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 # AGI Bar Agent 说明书
 
-你正在代表一位 AGI Bar 用户操作。用户在小程序「我的 → Agent 接入」复制了自己的**个人密钥**（`agib_u_` 开头，50 个字符），它代表**这个人本人**：小程序里这个人能做的，你在下面列出的接口里也能做；不能做的，你也做不了。
+你正在代表一位 AGI Bar 用户操作。用户在小程序「我的 → Agent 接入」复制了自己的**个人密钥**（`sk-agib-` 开头，51 个字符），它代表**这个人本人**：小程序里这个人能做的，你在下面列出的接口里也能做；不能做的，你也做不了。同一把密钥绑定 GitHub 后也是他在 AGI Bar 店内 token（`https://token.agi.bar`）的 key。`agib_u_` 开头的旧密钥已经作废：请用户在「我的 → Agent 接入」复制新的。
 
 ## 0. 先读这里
 
@@ -140,7 +140,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 本仓库的 `scripts/agibar.mjs` 是零依赖 Node 脚本（Node 18+）：
 
 ```bash
-export AGIBAR_API_KEY=agib_u_xxx
+export AGIBAR_API_KEY=sk-agib-xxx
 node scripts/agibar.mjs GET /api/agent/v1/whoami
 node scripts/agibar.mjs GET "/api/activities?storeId=BJ&size=10"
 node scripts/agibar.mjs POST /api/activities/<id>/register '{"registrationAnswers":[],"expectedRegistrationId":null}'

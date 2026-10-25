@@ -8,7 +8,7 @@
 
    > 阅读 https://github.com/agi-bar/agi-bar-skill ，了解 AGI Bar 的 Agentic 指令
 
-2. 再点「复制密钥」，把个人密钥（`agib_u_` 开头）单独发给它。
+2. 再点「复制密钥」，把个人密钥（`sk-agib-` 开头）单独发给它。
 
 Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 
@@ -24,7 +24,7 @@ Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 [`scripts/agibar.mjs`](scripts/agibar.mjs) 是零依赖的 Node 18+ 脚本：
 
 ```bash
-export AGIBAR_API_KEY=agib_u_xxx
+export AGIBAR_API_KEY=sk-agib-xxx
 node scripts/agibar.mjs GET /api/agent/v1/whoami
 node scripts/agibar.mjs GET "/api/activities?storeId=BJ&size=10"
 node scripts/agibar.mjs pay <orderNo>     # 金额、链接和终端二维码
@@ -40,7 +40,7 @@ node scripts/agibar.mjs qr <orderNo> pay.png
     "agi-bar": {
       "command": "node",
       "args": ["/path/to/agi-bar-skill/scripts/agibar.mjs", "mcp"],
-      "env": { "AGIBAR_API_KEY": "agib_u_xxx" }
+      "env": { "AGIBAR_API_KEY": "sk-agib-xxx" }
     }
   }
 }

@@ -48,7 +48,7 @@ test('CLI help and admin-path refusal', async () => {
   const help = await run(['--help']);
   assert.equal(help.code, 0);
   assert.match(help.stdout, /AGIBAR_API_KEY/);
-  const admin = await run(['GET', '/api/admin/orders'], { AGIBAR_API_KEY: `agib_u_${'a'.repeat(43)}` });
+  const admin = await run(['GET', '/api/admin/orders'], { AGIBAR_API_KEY: `sk-agib-${'a'.repeat(43)}` });
   assert.equal(admin.code, 1);
   assert.match(admin.stderr, /\/api\/admin/);
   const badKey = await run(['GET', '/api/agent/v1/whoami'], { AGIBAR_API_KEY: 'agib_short' });
