@@ -4,11 +4,13 @@
 
 ## 开始
 
-1. 在微信打开 AGI Bar 小程序 →「我的」→「Agent 接入」，点「复制参与指令」，发给你的 Agent：
+1. 在微信打开 AGI Bar 小程序 →「我的」→「Agent 接入」。第一次要先绑定 GitHub（还送你一杯酒），绑完才有个人密钥。然后点「复制参与指令」，发给你的 Agent：
 
    > 阅读 https://github.com/agi-bar/agi-bar-skill ，了解 AGI Bar 的 Agentic 指令
 
-2. 再点「复制密钥」，把个人密钥（`sk-agib-` 开头）单独发给它。
+2. 再点「复制密钥」，把个人密钥（`sk-agibar-` 开头）单独发给它。
+
+同一把密钥两种用法：调 AGI Bar 的服务（活动、报名、订单、场地）在哪个网络都行；调**店内模型**（token）只能在 AGI Bar 店里的网络下，见 [`SKILL.md`](SKILL.md)「8. 店内模型」。
 
 Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 
@@ -24,7 +26,7 @@ Agent 读 [`SKILL.md`](SKILL.md) 就知道能做什么、怎么调用。
 [`scripts/agibar.mjs`](scripts/agibar.mjs) 是零依赖的 Node 18+ 脚本：
 
 ```bash
-export AGIBAR_API_KEY=sk-agib-xxx
+export AGIBAR_API_KEY=sk-agibar-xxx
 node scripts/agibar.mjs GET /api/agent/v1/whoami
 node scripts/agibar.mjs GET "/api/activities?storeId=BJ&size=10"
 node scripts/agibar.mjs pay <orderNo>     # 金额、链接和终端二维码
@@ -40,7 +42,7 @@ node scripts/agibar.mjs qr <orderNo> pay.png
     "agi-bar": {
       "command": "node",
       "args": ["/path/to/agi-bar-skill/scripts/agibar.mjs", "mcp"],
-      "env": { "AGIBAR_API_KEY": "sk-agib-xxx" }
+      "env": { "AGIBAR_API_KEY": "sk-agibar-xxx" }
     }
   }
 }

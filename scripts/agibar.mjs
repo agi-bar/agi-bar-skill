@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // AGI Bar agent CLI + MCP stdio server. Zero dependencies, Node 18+.
 //
-//   AGIBAR_API_KEY=sk-agib-xxx node scripts/agibar.mjs GET /api/agent/v1/whoami
+//   AGIBAR_API_KEY=sk-agibar-xxx node scripts/agibar.mjs GET /api/agent/v1/whoami
 //   node scripts/agibar.mjs POST /api/activities/<id>/register '{"registrationAnswers":[]}'
 //   node scripts/agibar.mjs pay <orderNo>           # amount, deadline, link and a QR code drawn in the terminal
 //   node scripts/agibar.mjs wait <orderNo>          # long-poll a payment until it settles
@@ -17,8 +17,9 @@ import { createInterface } from 'node:readline';
 const VERSION = '1.0.0';
 const DEFAULT_BASE_URL = 'https://ssd.api.moblin.net/agi-bar';
 const SKILL_URL = 'https://github.com/agi-bar/agi-bar-skill';
-const KEY_PATTERN = /^sk-agib-[A-Za-z0-9_-]{43}$/;
-const LEGACY_PATTERN = /^agib_u_[A-Za-z0-9_-]{43}$/;
+const KEY_PATTERN = /^sk-agibar-[A-Za-z0-9_-]{43}$/;
+// Retired personal key formats: agib_u_ (until 2026-10-26) and sk-agib- (2026-10-26 only).
+const LEGACY_PATTERN = /^(?:agib_u_|sk-agib-)[A-Za-z0-9_-]{43}$/;
 
 function config() {
   const key = (process.env.AGIBAR_API_KEY || '').trim();
@@ -28,8 +29,8 @@ function config() {
 
 function assertKey(key) {
   if (!key) throw new Error('缺少 AGIBAR_API_KEY：请在 AGI Bar 小程序「我的 → Agent 接入」复制个人密钥');
-  if (LEGACY_PATTERN.test(key)) throw new Error('AGIBAR_API_KEY 是作废的旧密钥（agib_u_）：请在小程序「我的 → Agent 接入」复制新的 sk-agib- 密钥');
-  if (!KEY_PATTERN.test(key)) throw new Error('AGIBAR_API_KEY 格式不对：个人密钥以 sk-agib- 开头，共 51 个字符');
+  if (LEGACY_PATTERN.test(key)) throw new Error('AGIBAR_API_KEY 是作废的旧密钥（agib_u_ / sk-agib-）：请在小程序「我的 → Agent 接入」复制新的 sk-agibar- 密钥');
+  if (!KEY_PATTERN.test(key)) throw new Error('AGIBAR_API_KEY 格式不对：个人密钥以 sk-agibar- 开头，共 53 个字符');
 }
 
 function normalizePath(path) {

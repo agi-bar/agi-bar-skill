@@ -48,9 +48,14 @@ test('CLI help and admin-path refusal', async () => {
   const help = await run(['--help']);
   assert.equal(help.code, 0);
   assert.match(help.stdout, /AGIBAR_API_KEY/);
-  const admin = await run(['GET', '/api/admin/orders'], { AGIBAR_API_KEY: `sk-agib-${'a'.repeat(43)}` });
+  const admin = await run(['GET', '/api/admin/orders'], { AGIBAR_API_KEY: `sk-agibar-${'a'.repeat(43)}` });
   assert.equal(admin.code, 1);
   assert.match(admin.stderr, /\/api\/admin/);
   const badKey = await run(['GET', '/api/agent/v1/whoami'], { AGIBAR_API_KEY: 'agib_short' });
   assert.match(badKey.stderr, /格式不对/);
+  for (const retired of [`agib_u_${'a'.repeat(43)}`, `sk-agib-${'a'.repeat(43)}`]) {
+    const old = await run(['GET', '/api/agent/v1/whoami'], { AGIBAR_API_KEY: retired });
+    assert.equal(old.code, 1);
+    assert.match(old.stderr, /作废的旧密钥[\s\S]*sk-agibar-/);
+  }
 });

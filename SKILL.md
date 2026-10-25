@@ -1,17 +1,22 @@
 ---
 name: agi-bar
-description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——浏览活动、日历和菜单，报名与取消报名，付费报名与场地预约（付款由本人在小程序里完成），以及管理自己主办或协作的活动。
+description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——浏览活动、日历和菜单，报名与取消报名，付费报名与场地预约（付款由本人在小程序里完成），管理自己主办或协作的活动；在 AGI Bar 店里的网络下，同一把密钥还能调店内模型（token）。
 ---
 
 # AGI Bar Agent 说明书
 
-你正在代表一位 AGI Bar 用户操作。用户在小程序「我的 → Agent 接入」复制了自己的**个人密钥**（`sk-agib-` 开头，51 个字符），它代表**这个人本人**：小程序里这个人能做的，你在下面列出的接口里也能做；不能做的，你也做不了。同一把密钥绑定 GitHub 后也是他在 AGI Bar 店内 token（`https://token.agi.bar`）的 key。`agib_u_` 开头的旧密钥已经作废：请用户在「我的 → Agent 接入」复制新的。
+你正在代表一位 AGI Bar 用户操作。用户在小程序「我的 → Agent 接入」复制了自己的**个人密钥**（`sk-agibar-` 开头，53 个字符），它代表**这个人本人**：小程序里这个人能做的，你在下面列出的接口里也能做；不能做的，你也做不了。`agib_u_` 和 `sk-agib-` 开头的旧密钥已经作废：请用户在「我的 → Agent 接入」复制新的。
+
+同一把密钥有两种用法，网络要求不一样：
+
+- **AGI Bar 的服务**（第 1–7 节：活动、报名、订单、场地、活动管理）：在哪个网络都能调。
+- **店内模型**（第 8 节，`https://token.agi.bar`）：**只能在 AGI Bar 店里的网络下调**，请求必须从连着店内 Wi-Fi 的那台电脑发出。
 
 ## 0. 先读这里
 
 - **地址**：`https://ssd.api.moblin.net/agi-bar`（下文路径都接在它后面）。
 - **鉴权**：每个请求带 `Authorization: Bearer <个人密钥>`。公开接口（活动列表、详情、日历、菜单、门店）不带也行。
-- **还没拿到密钥**：请用户在小程序「我的 → Agent 接入」点「复制密钥」发给你（指令里不带密钥）。拿到后只保存在本地配置或环境变量 `AGIBAR_API_KEY` 里。
+- **还没拿到密钥**：请用户在小程序「我的 → Agent 接入」点「复制密钥」发给你（指令里不带密钥）。页面上如果只有「先绑定 GitHub」，说明还没绑 GitHub：要先绑定（还送一杯酒），绑完才有密钥。拿到后只保存在本地配置或环境变量 `AGIBAR_API_KEY` 里。
 - **回包**：统一是 `{ "code": 0, "message": "ok", "data": … }`。出错时 HTTP 状态非 2xx，`code` 是业务码、`message` 是可以直接转述给用户的中文原因。
 - **金额**一律是**整数分**（`amountFen: 9900` = ¥99.00）；时间是 ISO 8601，门店业务时间按北京时间理解。
 - **先调一次** `GET /api/agent/v1/whoami`：确认密钥可用，拿到 `staffAccess`（是否开通员工 Agent 接入）和限额。
@@ -30,6 +35,8 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 | 情况 | 返回 | 你该怎么做 |
 |---|---|---|
 | 密钥写错 / 已重置 | 401「个人密钥无效或已重置」 | 请用户在小程序「Agent 接入」复制最新密钥 |
+| 旧格式密钥（`agib_u_`、`sk-agib-`） | 401「个人密钥已换成 sk-agibar- 开头的新格式…」 | 请用户在小程序「Agent 接入」复制新的密钥 |
+| 没绑 GitHub | 401「先在小程序「我的 → Agent 接入」绑定 GitHub…」 | 请用户先在「Agent 接入」绑定 GitHub |
 | 90 天没用而休眠 | 401「…休眠…」 | 请用户在小程序「Agent 接入」重新复制一次密钥（复制即恢复） |
 | 太频繁 | 429（每分钟 60 次、每天 3000 次） | 等一会儿再试；列表请翻页而不是反复全量拉取 |
 | 接口没开放 | 403 | 请用户在小程序里操作 |
@@ -140,7 +147,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 本仓库的 `scripts/agibar.mjs` 是零依赖 Node 脚本（Node 18+）：
 
 ```bash
-export AGIBAR_API_KEY=sk-agib-xxx
+export AGIBAR_API_KEY=sk-agibar-xxx
 node scripts/agibar.mjs GET /api/agent/v1/whoami
 node scripts/agibar.mjs GET "/api/activities?storeId=BJ&size=10"
 node scripts/agibar.mjs POST /api/activities/<id>/register '{"registrationAnswers":[],"expectedRegistrationId":null}'
@@ -150,3 +157,46 @@ node scripts/agibar.mjs mcp          # 作为 MCP stdio server 运行
 ```
 
 MCP 配置示例见仓库 README。
+
+## 8. 店内模型（token，只能在 AGI Bar 店里的网络下）
+
+AGI Bar 给到店的客人免费提供大模型调用。同一把个人密钥就是这个人在店内模型上的 key，不用另外申请。
+
+**先确认网络**：店内模型只在 AGI Bar 店里的网络下可用，请求必须从**连着店内 Wi-Fi 的那台电脑**发出。在云端、远程沙箱或网页里运行的 Agent 调不到；这种情况下直接告诉用户：要在店里、用装在自己电脑上的 Agent 才能用。第 1–7 节的 AGI Bar 接口不受这个限制。
+
+| 项 | 值 |
+|---|---|
+| 地址 | `https://token.agi.bar`（OpenAI 兼容的 base URL 是 `https://token.agi.bar/v1`） |
+| 鉴权 | `Authorization: Bearer <个人密钥>`（和第 0 节同一把） |
+| 开放时间 | 跟门店营业时间走，打烊后会拒绝请求 |
+
+1. **先查有哪些模型**（也用来确认网络通不通）：
+   ```bash
+   curl --fail --silent --show-error \
+     --header "Authorization: Bearer $AGIBAR_API_KEY" \
+     https://token.agi.bar/v1/models
+   ```
+   模型名一律以返回结果为准，不要猜。
+2. **调用**：按客户端支持的格式选一个，不确定就用 OpenAI Chat Completions。
+
+   | 格式 | 路径 |
+   |---|---|
+   | OpenAI Chat Completions | `POST /v1/chat/completions` |
+   | OpenAI Responses | `POST /v1/responses` |
+   | Anthropic Messages | `POST /v1/messages` |
+   | Gemini GenerateContent | `POST /v1beta/models/{model}:generateContent`（流式 `:streamGenerateContent`） |
+
+   ```bash
+   curl --fail --silent --show-error https://token.agi.bar/v1/chat/completions \
+     --header "Authorization: Bearer $AGIBAR_API_KEY" \
+     --header 'Content-Type: application/json' \
+     --data '{"model":"<上一步拿到的模型名>","messages":[{"role":"user","content":"你好"}]}'
+   ```
+3. **Minimax H3 是视频模型**，不能当聊天或编程模型用：要生成视频时调 `POST https://token.agi.bar/minimax-h3/head/v1/videos/sync`（multipart 表单，返回视频文件）。
+4. **要把店内模型配进用户本机的 AI 客户端**（Claude Code、Codex、Cursor 等）：在店里的网络下读 `https://token.agi.bar/llms.txt`，按里面的步骤做（先备份配置、只新增不改默认模型、H3 的完整参数也在里面）。
+
+| 情况 | 现象 | 你该怎么做 |
+|---|---|---|
+| 不在店里的网络 | `token.agi.bar` 连不上或超时 | 请用户确认电脑连的是 AGI Bar 店内 Wi-Fi，连上后再试；不要改任何配置 |
+| 密钥不对 | 401 / 403 | 请用户在小程序「Agent 接入」重新复制密钥（旧格式 `agib_u_`、`sk-agib-` 和以前的共享 key `sk-agi_bar-static` 都已作废） |
+| 打烊了 | 报错说 key 或 team 被封（blocked） | 店内模型跟营业时间走，营业时间内再试 |
