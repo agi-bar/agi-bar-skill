@@ -19,7 +19,8 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 - **还没拿到密钥**：请用户在小程序「我的 → Agent 接入」点「复制密钥」发给你（指令里不带密钥）。页面上如果只有「先绑定 GitHub」，说明还没绑 GitHub：要先绑定（还送一杯酒），绑完才有密钥。拿到后只保存在本地配置或环境变量 `AGIBAR_API_KEY` 里。
 - **回包**：统一是 `{ "code": 0, "message": "ok", "data": … }`。出错时 HTTP 状态非 2xx，`code` 是业务码、`message` 是可以直接转述给用户的中文原因。
 - **金额**一律是**整数分**（`amountFen: 9900` = ¥99.00）；时间是 ISO 8601，门店业务时间按北京时间理解。
-- **先调一次** `GET /api/agent/v1/whoami`：确认密钥可用，拿到 `staffAccess`（是否开通员工 Agent 接入）和限额。
+- **先调一次** `GET /api/agent/v1/whoami`：确认密钥可用，拿到限额。
+- **个人密钥不能管理门店**：它只代表这个人本人。门店员工要让 Agent 做门店的活，请他在网页工作台「API 密钥」建员工密钥（`agib_` 开头），那套说明在工作台里。
 - **密钥只给这个人用**。不要把密钥写进公开的地方、日志或发给第三方；用户说「换钥匙」时，请他在小程序里点「重置」。
 
 ### 必须遵守
@@ -37,6 +38,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 | 密钥写错 / 已重置 | 401「个人密钥无效或已重置」 | 请用户在小程序「Agent 接入」复制最新密钥 |
 | 旧格式密钥（`agib_u_`、`sk-agib-`） | 401「个人密钥已换成 sk-agibar- 开头的新格式…」 | 请用户在小程序「Agent 接入」复制新的密钥 |
 | 没绑 GitHub | 401「先在小程序「我的 → Agent 接入」绑定 GitHub…」 | 请用户先在「Agent 接入」绑定 GitHub |
+| 调了门店侧接口（`/api/staff/...`） | 403「个人密钥只代表你本人，不能管理门店…」 | 告诉用户门店的活要用网页工作台建的员工密钥 |
 | 90 天没用而休眠 | 401「…休眠…」 | 请用户在小程序「Agent 接入」重新复制一次密钥（复制即恢复） |
 | 太频繁 | 429（每分钟 60 次、每天 3000 次） | 等一会儿再试；列表请翻页而不是反复全量拉取 |
 | 接口没开放 | 403 | 请用户在小程序里操作 |
@@ -57,7 +59,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 | 做什么 | 接口 | 说明 |
 |---|---|---|
-| 我是谁 | `GET /api/agent/v1/whoami` | `userId`、`staffAccess`、说明书地址、限额 |
+| 我是谁 | `GET /api/agent/v1/whoami` | `userId`、说明书地址、限额 |
 | 我的资料 | `GET /api/my/profile` | 只读；手机号打码。改资料请用户在小程序里改 |
 | 我的报名 | `GET /api/my/events/registrations` | `mode=upcoming\|past`、`status`、`page`、`size≤50`、`cursor` |
 | 我在某场的状态 | `GET /api/activities/:id/me` | 报名状态与 `reviewVersion`、票单 `registration.ticketOrder`（`orderNo`、`status`、`expiresAt`）、是否可管理 `canManageEvent` |
