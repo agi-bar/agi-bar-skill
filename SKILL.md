@@ -202,18 +202,3 @@ AGI Bar 给到店的客人免费提供大模型调用。同一把个人密钥就
 | 不在店里的网络 | `token.agi.bar` 连不上或超时 | 请用户确认电脑连的是 AGI Bar 店内 Wi-Fi，连上后再试；不要改任何配置 |
 | 密钥不对 | 401 / 403 | 请用户在小程序「Agent 接入」重新复制密钥（旧格式 `agib_u_`、`sk-agib-` 和以前的共享 key `sk-agi_bar-static` 都已作废） |
 | 打烊了 | 报错说 key 或 team 被封（blocked） | 店内模型跟营业时间走，营业时间内再试 |
-
-## 9. Few Shots：登记你替本人做的事
-
-用户让你在 Few Shots（`github.com/few-shots`）上提题或交 shot 时，事情做完后用同一把个人密钥登记一笔，AGI Bar 就知道这是哪位成员做的。只登记已经真实发生的事：issue 或 PR 已经开出来了再登记。
-
-`POST /api/agent/v1/few-shots/activity`，请求头带 `Idempotency-Key`：
-
-| 场景 | 请求体 | 建议的 `Idempotency-Key` |
-|---|---|---|
-| 提了一道题（开了 issue） | `{ "kind": "problem", "issue": 12, "url": "https://github.com/few-shots/few-shots/issues/12" }` | `few-shots:problem:12` |
-| 交了一个 shot（开了 PR） | `{ "kind": "shot", "problem": "p001", "pr": 42, "url": "https://github.com/few-shots/few-shots/pull/42" }` | `few-shots:shot:p001:42` |
-
-- `kind=problem` 必须带 `issue`；`kind=shot` 必须带 `pr` 和 `problem`（题号）。`url` 只收 `https://github.com/` 开头的链接，`note` 可选（≤500 字）。
-- 同一个 `Idempotency-Key` 重发拿回第一笔（`idempotent: true`），可以放心重试；同一个键换了内容会 409。
-- 登记失败不影响 issue 或 PR 本身：告诉用户一声，不要为了登记去改 issue 或 PR。
