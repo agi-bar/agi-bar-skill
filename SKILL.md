@@ -102,7 +102,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 
 **只订场地**（不对外办活动）：
 1. 看空档：`GET /api/bookings/availability?storeId=BJ&date=2026-10-20`（`occupiedRanges` 是已有活动的时段，可以重叠但要提醒用户「这个时段已有活动，可咨询工作人员」）。
-2. 报价：`POST /api/bookings/quote`，body 含 `storeId`、`type=hourly|daily`、`startAt`、`endAt`、`headcount`。
+2. 报价：`POST /api/bookings/quote`，body 含 `storeId`、`type=hourly|daily`、`startAt`、`endAt`、`headcount`。包天或包间再传 `venuePlanKey`，不按人数计价；门店可选方案和价格看 `GET /api/stores` 每店的 `venuePlans`（`key`、`name`、`amountFen`、`maxHeadcount`，`null` 表示不限人数）。包天固定 15:00–23:00，传了别的时间也按这个算。
 3. 创建：`POST /api/bookings`，在报价字段之外加 `contactName`、`contactPhone`（向用户确认）、`activityName`、可选 `remark`。返回 `bookingNo` 和待付款 `order` → 「4. 付款」。
 4. 改活动名 / 备注：`PATCH /api/my/bookings/:bookingNo`；已付款后要取消：`POST /api/my/bookings/:bookingNo/cancel-request`（只是申请，由门店审核）。
 
@@ -116,7 +116,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
      "registrationQuestions": [], "publicVisible": true
    }
    ```
-   多场次用 `sessions: [{ "date", "startTime", "endTime" }]`（最多 14 段）。
+   多场次用 `sessions: [{ "date", "startTime", "endTime" }]`（最多 14 段）。包天或包间同样传 `venuePlanKey`，有方案的活动调整名额不收扩容费，但不能超过方案人数上限。
 2. 返回 `eventId`、报价 `quote`，需要付场地费时带 `order` → 「4. 付款」。付款后进入门店审核，审核结果通知本人。
 3. 未付款或被退回的申请：改好后 `POST /api/my/events/:id/resubmit`（完整活动体）。
 
