@@ -80,7 +80,7 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 3. 结果：
    - **免费活动**：`status=pending_review`，等主办方审核，审核结果会通知本人。
    - **收费活动**：`status=pending_payment`，并返回 `order.orderNo` → 按「4. 付款」处理。付款成功后自动 `registered`，不再审核。
-4. 改报名答案：`PATCH /api/activities/:id/registration`（同上 body，带 `reviewVersion`、`expectedRegistrationId`）。
+4. 改报名（报名后随时可改，填错填漏都能补）：`PATCH /api/activities/:id/registration`，带 `reviewVersion`、`expectedRegistrationId`，**只传要改的**：没传的字段原样保留，`registrationAnswers` 只改传了的问题（其余问题保留原答案，传了的问题不能留空）；也可改本人资料 `displayName`（不能为空）、`company`、`title`、`wechatId` 与 `reason`。活动取消或报名已取消后不能改。
 5. 取消：`POST /api/activities/:id/cancel-registration`，body `{ "reviewVersion": <读到的版本> }`。活动开始后不能取消；已付款的会按剩余可退金额原路退款（响应里 `refund`）。
 6. 满员时可以 `POST /api/activities/:id/interest`（我感兴趣），有空位会通知本人。
 
@@ -131,7 +131,8 @@ description: 用 AGI Bar 个人密钥代表本人使用 AGI Bar 小程序——�
 | 修改信息 | `PATCH /api/my/events/:id` | 只改内容：`{ "mode": "content", "introMarkdown": … }`；只换封面：`{ "mode": "cover", "coverUrl": … }`；完整改档按「5」的活动体（发布后不能改门店、时间、名额、票价、报名方式） |
 | 调整名额 | `POST /api/my/events/:id/capacity` | `{ "capacity": 80 }`；扩容可能产生补差订单 → 「4. 付款」 |
 | 报名名单 | `GET /api/my/events/:id/registrations` | `status`、`keyword`、`page`、`size≤50`、`cursor`；加 `includeAnswers=1` 返回每人的报名表答案。字段：姓名、公司、职务、状态、报名时间、是否签到、是否 AGI Pass。**没有手机号和微信号** |
-| 单个报名 | `GET /api/my/events/:id/registrations/:registrationId` | 含报名理由与答案 |
+| 单个报名 | `GET /api/my/events/:id/registrations/:registrationId` | 含报名理由与答案；`form` 是改报名用的表单（问题、选项、当前答案、能否修改 `editable`） |
+| 帮参与者改报名 | `PATCH /api/my/events/:id/registrations/:registrationId` | `{ "registrationAnswers": [{ "questionId": "q1", "value": "…" }], "reason": "…" }`，只改传了的问题；选择题用 `selectedOptionIds`。称呼、公司、职位、微信号是本人资料，只有本人能改（传了 400）。改完本人会收到「报名信息已更新」 |
 | 审核 | `POST /api/my/events/:id/registrations/:registrationId/approve`、`/api/my/events/:id/registrations/:registrationId/ignore`、`/api/my/events/:id/registrations/:registrationId/remove` | body `{ "reviewVersion": <读到的版本> }`；移除已付款报名会退款 |
 | 签到 | `POST /api/my/events/check-in` | `{ "payload": "<扫到的入场码内容>" }` |
 | 现场签到码 | `GET /api/my/events/:id/checkin-code` | PNG 图片，参与者扫码自助签到 |
